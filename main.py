@@ -18,7 +18,11 @@ def chebyshev_nodes(n: int = 10) -> np.ndarray | None:
         (np.ndarray): Wektor węzłów Czebyszewa (n,).
         Jeżeli dane wejściowe są niepoprawne funkcja zwraca `None`.
     """
-    pass
+    if not isinstance(n, int) or n <= 0:
+        return None
+    k = np.arange(n)
+    nodes = np.cos(k * np.pi / (n - 1))
+    return nodes
 
 
 def bar_cheb_weights(n: int = 10) -> np.ndarray | None:
@@ -31,7 +35,19 @@ def bar_cheb_weights(n: int = 10) -> np.ndarray | None:
         (np.ndarray): Wektor wag dla węzłów Czebyszewa (n,).
         Jeżeli dane wejściowe są niepoprawne funkcja zwraca `None`.
     """
-    pass
+    if not isinstance(n, int) or n < 0:
+        return None
+    
+    w_j = np.zeros(n)
+    
+    for j in range(n):
+        if j == 0 or j == n-1:
+            delta_j = 0.5
+        else:
+            delta_j = 1.0
+        w_j[j] = ((-1) ** j) * delta_j
+    
+    return w_j
 
 
 def barycentric_inte(
@@ -52,7 +68,27 @@ def barycentric_inte(
         (np.ndarray): Wektor wartości funkcji interpolującej (n,).
         Jeżeli dane wejściowe są niepoprawne funkcja zwraca `None`.
     """
-    pass
+    if not (isinstance(xi, np.ndarray) and isinstance(yi, np.ndarray) and
+            isinstance(wi, np.ndarray) and isinstance(x, np.ndarray)):
+        return None
+    m = len(xi)
+    if len(yi) != m or len(wi) != m:
+        return None
+    
+    with np.errstate(divide='ignore', invalid='ignore'):
+        diff = x[:, None] - xi[None, :]
+        frac = wi / diff
+        numerator = np.sum(frac * yi, axis=1)
+        denominator = np.sum(frac, axis=1)
+        result = numerator / denominator
+
+    
+    for k in range(len(result)):
+        if np.isnan(result[k]):
+            idx = np.argmin(np.abs(xi - x[k]))
+            result[k] = yi[idx]
+    
+    return result
 
 
 def L_inf(
@@ -71,4 +107,8 @@ def L_inf(
         (float): Wartość normy L-nieskończoność.
         Jeżeli dane wejściowe są niepoprawne funkcja zwraca `None`.
     """
-    pass
+    if not isinstance(xr, (int, float, list, np.ndarray)) or not isinstance(x, (int, float, list, np.ndarray)):
+        return None
+    
+    L_inf_value = np.max(np.abs(np.array(xr) - np.array(x)))
+    return L_inf_value
